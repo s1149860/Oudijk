@@ -109,7 +109,7 @@ then
 	
 	done
 
-	if [[ $changetype = "production" || $changetype = "acceptance" || $changetype != "test" ]] 
+	if [[ $changetype = "production" || $changetype = "acceptance" || $changetype = "test" ]] 
 	then
 		cd /home/student/Oudijk/customers/$customer_name/$changetype
 		read -p "How much RAM would you like to assign to the $changetype environment? [in MB] : " ramount
