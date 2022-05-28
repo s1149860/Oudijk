@@ -1,0 +1,42 @@
+Vagrant.configure("2") do |config|
+  config.ssh.insert_key = false
+  config.ssh.private_key_path = ["~/.ssh/id_rsa", "~/.vagrant.d/insecure_private_key"]
+
+# Configure the webservers
+  (1..2).each do |x|
+    config.vm.define "Lauren-WS0#{x}" do |wbs|
+      wbs.vm.box = "generic/ubuntu2004"
+      wbs.vm.hostname = "Lauren-WS0#{x}"
+      wbs.vm.network :private_network, ip: "192.168.56.#{x+10}"
+      wbs.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+      wbs.vm.provider "virtualbox" do |vbox|
+        vbox.memory = "1024"
+        vbox.name = "Lauren-WS0#{x}"
+      end
+    end
+  end
+
+  #Configure the loadbalancers
+  config.vm.define "Lauren-LB01" do |lbs|
+    lbs.vm.box = "generic/ubuntu2004"
+    lbs.vm.hostname = "Lauren-LB01"
+    lbs.vm.network :private_network, ip: "192.168.56.20"
+    lbs.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+    lbs.vm.provider "virtualbox" do |vbox|
+      vbox.memory = "1024"
+      vbox.name = "Lauren-LB01"
+    end
+  end
+
+  #configure the databaseservers
+  config.vm.define "Lauren-DB01" do |dbs|
+    dbs.vm.box = "generic/ubuntu2004"
+    dbs.vm.hostname = "Lauren-DB01"
+    dbs.vm.network :private_network, ip: "192.168.56.30"
+    dbs.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+    dbs.vm.provider "virtualbox" do |vbox|
+      vbox.memory = "1024"
+      vbox.name = "Lauren-DB01"
+    end
+  end
+end

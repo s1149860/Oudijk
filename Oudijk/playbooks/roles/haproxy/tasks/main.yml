@@ -1,0 +1,30 @@
+---
+# tasks file for haproxy
+- hosts: loadbalancers
+  become: yes
+  gather_facts: True
+
+  tasks:
+
+  - name: Installing haproxy
+    apt:
+      name: haproxy
+      state: present
+      update_cache: yes
+
+  - name: Enabling haproxy
+    lineinfile:
+      dest: /etc/default/haproxy
+      regexp: "^ENABLED"
+      line: "ENABLED=1"
+
+  - name: Configuring haproxy
+    template:
+      src: "/home/student/Oudijk/playbooks/roles/haproxy/files/haproxy.cfg"
+      dest: "/etc/haproxy/haproxy.cfg"
+      backup: yes
+
+  - name: Restarting haproxy
+    ansible.builtin.service:
+      name: haproxy
+      state: restarted

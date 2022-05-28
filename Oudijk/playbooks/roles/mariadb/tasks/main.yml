@@ -1,0 +1,111 @@
+---
+- hosts: databaseservers
+  become: yes
+  gather_facts: True
+
+  tasks:
+
+  - name: Installing python and mariadb packages
+    apt:
+      name: ['python3', 'python3-pip', 'mariadb-server', 'mariadb-client']
+      state: present
+      update_cache: yes
+
+  - name: Installing pymysql packages
+    pip:
+      name: pymysql
+      state: present
+
+  - name: Starting MariaDB
+    service:
+      name: mariadb
+      state: started  
+
+  - name: Setting mysql root password
+    template:
+      src: "~/Oudijk/playbooks/roles/mariadb/files/my.cnf"
+      dest: "/root/.my.cnf"
+      owner: root
+      mode: 0600
+    become: yes
+
+  - name: Update the root password
+    mysql_user:
+      name: root
+      host: "{{ item }}"
+      login_unix_socket: "/var/run/mysqld/mysqld.sock" 
+      password: "{{ mysql_root_password }}"
+      priv: "*.*:ALL,GRANT"
+      check_implicit_admin: true
+    with_items:
+      - localhost
+      - 127.0.0.1
+      - ::1
+    become: yes
+
+  - name: Removing anonymous users
+    mysql_user:
+      user=""
+      host={{ item }}
+      state=absent
+    with_items:
+      - 127.0.0.1
+      - ::1
+      - localhost
+
+  - name: Removing test database
+    mysql_db:
+      name: test
+      state: absent
+
+  - name: Creating login credentials for localhost
+    mysql_user:
+      user=oudijk
+      password=oudijk
+      host=localhost
+      priv=*.*:ALL,GRANT
+
+  - name: Creating login credentials for machine localhost
+    mysql_user:
+      user=oudijk
+      password=oudijk
+      host=%
+      priv=*.*:ALL,GRANT
+
+  - name: Granting privileges to the webservers
+    mysql_user:
+      user=oudijk
+      password=oudijk
+      host="{{ item }}"
+      priv="oudijkdb.*:ALL,GRANT"
+    with_items:
+      - "{{ webserver_host_1 }}"
+      - "{{ webserver_host_2 }}"
+
+  - name: Flushing privileges
+    command: mysql -e "FLUSH PRIVILEGES;"
+
+  - name: Inserting database file
+    copy:
+      src=~/Oudijk/playbooks/roles/mariadb/files/oudijkdb.sql
+      dest=/tmp
+
+  - name: Importing database file
+    mysql_db:
+      name: oudijkdb
+      state: import
+      target: "/tmp/oudijkdb.sql"
+
+  - name: Set bind address of remote connection
+    lineinfile:
+      path: /etc/mysql/mariadb.conf.d/50-server.cnf
+      backrefs: yes
+      regexp: '^bind-address'
+      line: 'bind-address = ::'
+      state: present
+
+  - name: Restarting MariaDB
+    ansible.builtin.service:
+      name: mariadb
+      state: restarted
+...

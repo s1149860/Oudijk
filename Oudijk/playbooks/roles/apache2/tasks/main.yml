@@ -1,0 +1,33 @@
+---
+# tasks file for apache2
+- hosts: webservers
+  become: yes
+
+  tasks:
+  - name: Installing Apache2
+    apt:
+      name: apache2
+      state: present
+      update_cache: yes
+
+  - name: Readying php file
+    template:
+      src: "/home/student/Oudijk/playbooks/roles/apache2/files/index.php"
+      dest: "/var/www/{{http_host_dir}}/index.php"
+
+  - name: Installing PHP
+    apt:
+      name: php
+      state: present
+      update_cache: yes
+
+  - name: Installing PHP-MySQL
+    apt:
+      name: php-mysql
+      state: present
+      update_cache: yes
+
+  - name: Restarting Apache
+    ansible.builtin.service:
+      name: apache2
+      state: restarted

@@ -1,0 +1,23 @@
+---
+# WS
+- hosts: webservers
+  become: yes
+
+  roles:
+    - apache2
+
+# LB
+- hosts: loadbalancers
+  become: yes
+
+  roles:
+    - haproxy
+
+# DB
+- hosts: databaseservers
+  become: yes
+
+  roles:
+    - mariadb
+...
+
